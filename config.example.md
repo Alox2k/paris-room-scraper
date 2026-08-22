@@ -8,8 +8,9 @@ Copie ce fichier en `config.md` (ignoré par git) et remplis-le avec tes propres
 | Âge                        | (à compléter)                                                          |
 | Profil                     | (ex : statut pro, revenus nets/mois, dossier prêt ou non)              |
 | Contraintes déplacement    | (lieux réguliers à desservir : travail, sport, université, etc.)       |
-| Zones cibles (priorité 1)  | (ville/quartier + ligne de transport)                                  |
-| Zones cibles (priorité 2)  | (ville/quartier + ligne de transport)                                  |
+| Zones cibles (priorité 1)  | (villes/arrondissements + lignes de transport, autant que tu veux)     |
+| Zones cibles (priorité 2)  | (zones adjacentes acceptables, moins prioritaires)                     |
+| Zones exclues / à éviter    | (zones à ne jamais proposer, ex : trop loin du travail)               |
 | Budget studio               | (montant max, charges comprises)                                       |
 | Budget chambre coloc/coliving | (montant max, charges comprises)                                     |
 | Type de bail accepté        | (classique / mobilité / coliving / colocation / tous)                 |

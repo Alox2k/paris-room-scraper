@@ -10,10 +10,10 @@ Lis `config.md` avant de commencer — tous les critères (zones, budget, contra
 
 Utilise **Claude in Chrome** pour naviguer (pas de simple requête HTTP — ces sites bloquent souvent le scraping classique).
 
-Pour chaque plateforme, cherche des studios/T1 meublés (et colocations/coliving si le budget chambre le permet) dans les zones cibles :
+Pour chaque plateforme, cherche des studios/T1 meublés (et colocations/coliving si le budget chambre le permet) dans **toutes** les zones listées dans `config.md` (priorité 1 et priorité 2), en excluant explicitement les zones listées comme "à éviter" :
 
-1. **PAP.fr** — `pap.fr/annonce/locations-appartement-meuble-boulogne-billancourt-92100-g43267-studio` et équivalent Issy-les-Moulineaux (g43270). Avantage : 0 frais d'agence, annonces particuliers.
-2. **SeLoger.com** — filtre studio meublé, trie par date de publication descendante.
+1. **PAP.fr** — une recherche par zone cible (ex : `pap.fr/annonce/locations-appartement-meuble-{ville-ou-arrondissement}-studio`). Avantage : 0 frais d'agence, annonces particuliers.
+2. **SeLoger.com** — filtre studio meublé par zone, trie par date de publication descendante.
 3. **LeBonCoin.fr** — catégorie locations, filtre meublé + zone. Beaucoup de particuliers et de bail mobilité.
 4. **Bien'ici.com** — bonne carte interactive, utile pour vérifier la distance aux stations.
 
@@ -50,23 +50,24 @@ Charge le tracker (`tracker/appart-tracker.xlsx`, voir `tracker/README.md` pour 
 ## Étape 3 — Logique de priorité
 
 **HAUTE priorité :**
-- Zone 1 (Boulogne-Billancourt secteur ligne 9) OU Zone 2 (Issy) avec prix ≤ budget configuré
+- Zone cible priorité 1 (`config.md`) avec prix ≤ budget configuré
 - Meublé
 - Disponible à ± 1 semaine de la date d'emménagement
-- Ascenseur si étage ≥ 3, ou étage ≤ 2
 - Pas de red flag dans la description (immeuble insalubre, "à rénover", charges non détaillées suspectes)
 
 **MOYENNE priorité :**
-- Zone 1 ou 2 mais un critère secondaire manque (ex : ascenseur non précisé, dispo à 2-3 semaines d'écart)
-- Zone adjacente bien connectée (Meudon, Sèvres, Vanves, Malakoff) dans le budget
+- Zone cible priorité 1 ou 2 mais un critère secondaire manque (ex : dispo à 2-3 semaines d'écart)
+- Zone adjacente bien connectée listée en priorité 2 dans `config.md`, dans le budget
 
 **BASSE priorité :**
 - Hors budget de plus de 10%
 - Disponibilité trop tardive (> 3 semaines après la date cible)
-- Ascenseur manquant confirmé à un étage élevé
-- Zone mal connectée aux 3 points de contrainte (Ranelagh / Nanterre / Montrouge)
+- Zone mal connectée aux contraintes de déplacement listées dans `config.md`
 
-Applique aussi les notes spécifiques de `config.md` (ex : dégradation automatique si pas d'ascenseur).
+**Exclusion :**
+- Toute zone listée comme "à éviter" dans `config.md` — ne pas inclure dans le tracker, sauf demande explicite.
+
+Applique aussi les notes de priorisation spécifiques listées dans `config.md`.
 
 Colonnes du tableur colorées : HAUTE = vert (`E2EFDA`), MOYENNE = jaune (`FFFFC7`), BASSE = rouge (`FCE4D6`).
 
