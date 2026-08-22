@@ -1,0 +1,15 @@
+# Personal, non-shareable config (your real search criteria)
+config.md
+
+# Generated outreach messages
+outreach/*
+!outreach/.gitkeep
+
+# Generated tracker spreadsheet
+tracker/*.xlsx
+
+# macOS
+.DS_Store
+
+# Python venv
+.venv/
