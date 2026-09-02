@@ -1,14 +1,14 @@
-# Paris Property Hunt — Automatisé avec Claude Code
+# Paris Property Hunt
 
 Adapté de [london-property-hunt](https://github.com/mikepapadim/london-property-hunt-public) pour une recherche d'appartement à Paris/petite couronne.
 
-Workflow IA qui cherche sur les plateformes de location parisiennes, suit les annonces dans un tableur, priorise selon tes critères, et t'envoie un mail récap — automatiquement.
+Workflow IA qui cherche sur les plateformes de location parisiennes, suit les annonces dans un tableur, priorise selon tes critères, et t'envoie un mail récap automatiquement.
 
 ---
 
 ## Ce que ça fait
 
-1. **Cherche sur 4 plateformes** — PAP, SeLoger, LeBonCoin, Bien'ici — sur tes zones cibles
+1. **Cherche sur 4 plateformes** — PAP, SeLoger, LeBonCoin, Bien'ici, sur tes zones cibles
 2. **Déduplique** contre ton tableur de suivi (par URL)
 3. **Priorise** les annonces en HAUTE / MOYENNE / BASSE selon tes critères
 4. **Génère des messages de contact** prêts à envoyer pour chaque annonce HAUTE priorité
@@ -76,12 +76,6 @@ Dans Claude Code, utilise `/schedule` :
 ```
 /schedule 0 8,19 * * * Lance la skill de recherche d'appart Paris
 ```
-
----
-
-## Pourquoi Claude in Chrome et pas juste web_search ?
-
-PAP, SeLoger et LeBonCoin changent leur structure de page régulièrement et bloquent souvent les requêtes automatisées classiques. Passer par un vrai navigateur (Claude in Chrome) est plus robuste et te permet aussi de laisser Claude cliquer directement sur "contacter" si tu veux aller plus vite — même si je recommande de garder ça manuel au début, le temps de voir si le tri HIGH/MEDIUM/LOW est fiable.
 
 ---
 
