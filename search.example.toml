@@ -1,0 +1,43 @@
+# Critères machine-lisibles pour les scrapers (hunt/).
+# Copie ce fichier en `search.toml` (ignoré par git) et adapte-le.
+# Les infos perso (profils, dossier, trajets, email) restent dans `config.md`.
+
+[search]
+max_rent = 2200            # loyer max / mois, charges comprises (€)
+rent_tolerance = 0.10      # on garde jusqu'à +10 % au-dessus (marqué BASSE priorité)
+min_rooms = 3              # "pièces" — 3 pièces = 2 chambres + séjour
+min_bedrooms = 2
+min_surface = 45           # m², 0 pour désactiver
+furnished = "any"          # "yes" | "no" | "any"
+move_in = "2026-12-01"     # date d'emménagement visée (AAAA-MM-JJ)
+
+# Départements interrogés sur chaque site (on cherche large, puis on filtre par code postal).
+departments = ["75", "92", "93", "94"]
+
+[zones]
+# Codes postaux. Laisser une liste vide = pas de contrainte à ce niveau.
+priority1 = []             # ex : ["75011", "75012", "75020", "93100"]
+priority2 = []             # ex : ["75010", "75019", "94300"]
+exclude = []               # jamais proposés, ex : ["93000"]
+# Si priority1 et priority2 sont vides, tout ce qui est dans `departments` est accepté.
+# Sinon, les annonces hors des deux listes sont gardées en "hors-zone" (BASSE) si keep_out_of_zone = true.
+keep_out_of_zone = false
+
+[sources]
+# Ordre = ordre d'exécution. Retire une source pour la désactiver.
+enabled = [
+  "bienici", "leboncoin", "pap", "seloger", "jinka",
+  "figaro", "entreparticuliers", "locservice", "foncia", "paruvendu",
+  "superimmo", "laforet", "parisattitude", "lodgis", "spotahome", "housinganywhere",
+]
+max_pages = 3              # pages de résultats max par recherche
+delay_seconds = 1.5        # pause entre deux requêtes sur un même site
+
+[jinka]
+# Jinka (agrégateur gratuit) : crée un compte + une alerte sur jinka.fr, puis copie le cookie
+# `LA_API_TOKEN` depuis ton navigateur dans la variable d'environnement ci-dessous.
+token_env = "JINKA_TOKEN"
+
+[output]
+tracker = "tracker/appart-tracker.xlsx"
+last_run = "output/last-run.json"
