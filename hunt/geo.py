@@ -73,6 +73,8 @@ def postal_from_city(city: str | None, dept: str | None = None) -> str | None:
     if direct:
         return direct
     name = re.sub(r"\(.*?\)", "", city).strip()
+    if m := re.fullmatch(r"paris\W*(\d{1,2})", name, re.I):  # URL slugs like "paris-18"
+        return f"750{int(m.group(1)):02d}" if 1 <= int(m.group(1)) <= 20 else None
     key = f"{slug(name)}|{dept or ''}"
     cache = _load()
     if key in cache:

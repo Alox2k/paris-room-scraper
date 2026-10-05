@@ -27,8 +27,11 @@ keep_out_of_zone = false
 # Ordre = ordre d'exécution. Retire une source pour la désactiver.
 enabled = [
   "bienici", "leboncoin", "pap", "seloger", "jinka",
+  # logicimmo n'est pas listé : même inventaire que SeLoger, utilisé seulement en secours si SeLoger est bloqué.
   "figaro", "entreparticuliers", "locservice", "foncia", "paruvendu",
-  "superimmo", "laforet", "parisattitude", "lodgis", "spotahome", "housinganywhere",
+  "laforet",
+  # Meublé / expat (plus cher, Paris intra-muros surtout). Ignorés si furnished = "no".
+  "parisattitude", "lodgis", "spotahome",
 ]
 max_pages = 3              # pages de résultats max par recherche
 delay_seconds = 1.5        # pause entre deux requêtes sur un même site

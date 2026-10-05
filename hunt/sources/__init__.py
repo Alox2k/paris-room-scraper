@@ -5,7 +5,7 @@ import importlib
 ALL = [
     "bienici", "leboncoin", "pap", "seloger", "logicimmo", "jinka",
     "figaro", "entreparticuliers", "locservice", "foncia", "paruvendu",
-    "superimmo", "laforet", "parisattitude", "lodgis", "spotahome", "housinganywhere",
+    "laforet", "parisattitude", "lodgis", "spotahome",
 ]
 
 # Used only when the primary source fails in a run.
