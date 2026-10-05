@@ -26,7 +26,7 @@ def zone_tier(postal: str | None, cfg: Config) -> str | None:
 def keep(l: Listing, cfg: Config) -> bool:
     if l.price is not None and l.price > cfg.price_ceiling:
         return False
-    if l.price is not None and l.price < 300:  # parking spots, deposits, "price on request" placeholders
+    if l.price is not None and l.price < max(300, cfg.min_rent):  # 300: parking spots / placeholder prices
         return False
     if l.rooms is not None and l.rooms < cfg.min_rooms:
         return False

@@ -3,13 +3,14 @@
 # Les infos perso (profils, dossier, trajets, email) restent dans `config.md`.
 
 [search]
+min_rent = 0               # loyer min (€) — 0 pour désactiver
 max_rent = 2200            # loyer max / mois, charges comprises (€)
 rent_tolerance = 0.10      # on garde jusqu'à +10 % au-dessus (marqué BASSE priorité)
 min_rooms = 3              # "pièces" — 3 pièces = 2 chambres + séjour
 min_bedrooms = 2
 min_surface = 45           # m², 0 pour désactiver
 furnished = "any"          # "yes" | "no" | "any"
-move_in = "2026-12-01"     # date d'emménagement visée (AAAA-MM-JJ)
+move_in = "2026-12-01"     # date visée : "AAAA-MM-JJ", ou relative au jour du run : "+30d", "+4w", "+1m"
 
 # Départements interrogés sur chaque site (on cherche large, puis on filtre par code postal).
 departments = ["75", "92", "93", "94"]

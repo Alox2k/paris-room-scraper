@@ -105,7 +105,7 @@ def main(argv=None):
 
     out = {
         "run_at": datetime.now().isoformat(timespec="seconds"),
-        "criteria": {"max_rent": cfg.max_rent, "min_rooms": cfg.min_rooms, "min_bedrooms": cfg.min_bedrooms,
+        "criteria": {"min_rent": cfg.min_rent, "max_rent": cfg.max_rent, "min_rooms": cfg.min_rooms, "min_bedrooms": cfg.min_bedrooms,
                      "min_surface": cfg.min_surface, "furnished": cfg.furnished, "move_in": cfg.move_in},
         "sources": report,
         "counts": {"fetched": len(raw), "matching": len(kept), "after_merge": len(merged), "new": len(new)},

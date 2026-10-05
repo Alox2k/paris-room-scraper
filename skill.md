@@ -26,6 +26,7 @@ Le script :
 
 Lis `output/last-run.json`. Champs utiles :
 - `sources` : statut par site (`ok`, `empty`, `blocked`, `error`, `not-configured`). Un site bloqué n'est pas une erreur fatale — signale-le dans le mail.
+- `criteria` : critères effectifs du run — utilise `criteria.move_in` comme date d'emménagement (déjà calculée si `search.toml` contient une date relative comme `"+1m"`).
 - `counts` : volumes (récupérées, correspondant aux critères, après fusion, nouvelles).
 - `new` : les nouvelles annonces, au format :
 
@@ -51,7 +52,7 @@ Si le script échoue complètement (exception Python), essaie `.venv/bin/python 
 Pour chaque annonce de `new` :
 
 **HAUTE priorité :**
-- `zone_tier` = "1" et prix ≤ `max_rent` de `search.toml`
+- `zone_tier` = "1" et `min_rent` ≤ prix ≤ `max_rent` (voir `criteria`)
 - Nombre de chambres conforme (≥ `min_bedrooms`, ou inconnu mais surface cohérente)
 - Disponible à ± 1 semaine de la date d'emménagement (ou dispo non précisée)
 - Pas de red flag dans la description (insalubre, "à rénover", charges floues, bail code civil / résidence secondaire si vous cherchez une résidence principale, arnaque probable : prix très bas + paiement avant visite)
