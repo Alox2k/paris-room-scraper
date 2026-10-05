@@ -13,3 +13,12 @@ tracker/*.xlsx
 
 # Python venv
 .venv/
+
+# Python bytecode
+__pycache__/
+
+# Local caches and run output
+.cache/
+output/
+search.toml
+.env
