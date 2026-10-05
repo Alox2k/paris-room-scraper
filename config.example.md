@@ -1,27 +1,54 @@
-# Config — Recherche d'appart Paris
+# Config — Recherche d'appart Paris (à deux)
 
-Copie ce fichier en `config.md` (ignoré par git) et remplis-le avec tes propres critères. `config.md` reste local — il n'est jamais commit.
+Copie ce fichier en `config.md` (ignoré par git) et remplis-le. `config.md` reste local, jamais commit.
 
-| Champ                     | Valeur                                                                 |
-| -------------------------- | ---------------------------------------------------------------------- |
-| Nom                        | (à compléter)                                                          |
-| Âge                        | (à compléter)                                                          |
-| Profil                     | (ex : statut pro, revenus nets/mois, dossier prêt ou non)              |
-| Contraintes déplacement    | (lieux réguliers à desservir : travail, sport, université, etc.)       |
-| Zones cibles (priorité 1)  | (villes/arrondissements + lignes de transport, autant que tu veux)     |
-| Zones cibles (priorité 2)  | (zones adjacentes acceptables, moins prioritaires)                     |
-| Zones exclues / à éviter    | (zones à ne jamais proposer, ex : trop loin du travail)               |
-| Budget studio               | (montant max, charges comprises)                                       |
-| Budget chambre coloc/coliving | (montant max, charges comprises)                                     |
-| Type de bail accepté        | (classique / mobilité / coliving / colocation / tous)                 |
-| Ascenseur                   | (obligatoire à partir de quel étage, exceptions éventuelles)           |
-| Date d'emménagement          | (date cible ± tolérance)                                              |
-| Email                        | (à compléter)                                                          |
-| Dossier de location           | (statut : prêt, Visale à demander, garant, etc.)                      |
-| Dossier de recherche local    | (chemin local, ex : ~/Paris-Appart-Hunt)                              |
+Les critères **chiffrés** utilisés par les scrapers (budget, pièces, chambres, surface, codes postaux) sont dans `search.toml` (copie de `search.example.toml`). Ce fichier-ci sert à Claude pour prioriser et écrire les messages.
+
+## Le foyer
+
+| Champ                        | Personne 1                                   | Personne 2                                   |
+| ---------------------------- | -------------------------------------------- | -------------------------------------------- |
+| Prénom                       | (à compléter)                                | (à compléter)                                |
+| Âge                          |                                              |                                              |
+| Situation pro                | (CDI / CDD / freelance / étudiant…, depuis)  |                                              |
+| Revenus nets / mois          |                                              |                                              |
+| Garant / Visale              | (oui/non, type)                              |                                              |
+| Lieux réguliers à desservir  | (travail, sport… + fréquence)                | (travail, sport… + fréquence)                |
+| Trajet max acceptable        | (ex : 35 min porte à porte)                  |                                              |
+
+Relation (couple, amis…) : (à compléter — utile pour le ton des messages et le type de bail)
+
+## Le logement
+
+| Champ                        | Valeur                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------- |
+| Type                         | Appartement 2 chambres (3 pièces minimum)                               |
+| Budget                       | (max charges comprises — reporter dans `search.toml` → `max_rent`)      |
+| Surface minimale              | (reporter dans `search.toml` → `min_surface`)                          |
+| Meublé                        | (oui / non / indifférent — `search.toml` → `furnished`)               |
+| Type de bail accepté          | (bail classique résidence principale / mobilité / code civil…)        |
+| Ascenseur                     | (obligatoire à partir de quel étage)                                  |
+| Must-have                     | (ex : chambres séparées, 2e WC, lave-linge, extérieur…)              |
+| Date d'emménagement           | (date cible ± tolérance — `search.toml` → `move_in`)                  |
+
+## Zones
+
+Décris-les ici en clair (Claude s'en sert pour juger les trajets), et reporte les **codes postaux** dans `search.toml` (`[zones]`).
+
+- **Priorité 1** : (quartiers/villes + lignes de métro/RER, et pourquoi)
+- **Priorité 2** : (zones acceptables)
+- **À éviter** : (et pourquoi)
+
+## Contact & dossier
+
+| Champ                         | Valeur                                                 |
+| ----------------------------- | ------------------------------------------------------ |
+| Email du récap                | (à compléter)                                          |
+| Dossiers de location          | (statut : prêts / en cours, DossierFacile…)            |
+| Dossier de recherche local    | (ex : ~/Paris-Appart-Hunt)                             |
 
 ---
 
 ## Notes de priorisation spécifiques
 
-Ajoute ici toute règle personnelle qui affine la priorisation HAUTE/MOYENNE/BASSE au-delà de la logique par défaut dans `skill.md` — par exemple des zones adjacentes acceptables, des dégradations automatiques (ex : pas d'ascenseur), ou des exceptions "coup de cœur".
+Règles personnelles qui affinent HAUTE/MOYENNE/BASSE au-delà de `skill.md` — ex : "trajet > 45 min pour l'un des deux → BASSE", "pas d'ascenseur au-dessus du 3e → MOYENNE", "balcon = +1 niveau", exceptions coup de cœur.

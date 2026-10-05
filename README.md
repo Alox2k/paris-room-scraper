@@ -1,77 +1,109 @@
 # Paris Property Hunt
 
-Adapté de [london-property-hunt](https://github.com/mikepapadim/london-property-hunt-public) pour une recherche d'appartement à Paris/petite couronne.
+Adapté de [london-property-hunt](https://github.com/mikepapadim/london-property-hunt-public) pour une recherche d'appartement à Paris/petite couronne — ici pour **deux personnes cherchant un 2 chambres**.
 
-Workflow IA qui cherche sur les plateformes de location parisiennes, suit les annonces dans un tableur, priorise selon tes critères, et t'envoie un mail récap automatiquement.
+Un script Python récupère les annonces de 14 sites **par simples requêtes HTTP** (pas de navigateur, pas de Claude in Chrome), filtre selon tes critères et fusionne les doublons. Claude ne fait plus que ce qu'il fait bien : prioriser, écrire les messages de contact, envoyer le mail récap.
 
 ---
 
 ## Ce que ça fait
 
-1. **Cherche sur 4 plateformes** — PAP, SeLoger, LeBonCoin, Bien'ici, sur tes zones cibles
-2. **Déduplique** contre ton tableur de suivi (par URL)
-3. **Priorise** les annonces en HAUTE / MOYENNE / BASSE selon tes critères
-4. **Génère des messages de contact** prêts à envoyer pour chaque annonce HAUTE priorité
-5. **T'envoie un mail récap** avec cartes cliquables, messages prêts à l'emploi, et un backlog des annonces pas encore contactées
+1. **Collecte** sur 14 sources (voir tableau) — `python -m hunt.run`
+2. **Filtre** localement : budget, pièces, chambres, surface, meublé, codes postaux
+3. **Fusionne** le même appart publié sur plusieurs sites (code postal + prix ±3 % + surface ±2 m²)
+4. **Déduplique** contre le tracker Excel (URL + URLs des doublons)
+5. **Claude priorise** HAUTE / MOYENNE / BASSE et colore le tracker
+6. **Claude génère** des messages de contact pour les HAUTE priorité
+7. **Claude envoie** un mail récap (Gmail MCP), avec l'état de chaque source
 
-Tourne sur un cron (ex : 8h et 19h, les meilleurs créneaux pour les nouvelles annonces à Paris). Effort humain entre deux runs : zéro.
+---
+
+## Sources
+
+Testées le 2026-10-05 avec `python -m hunt.run --check` (taux de remplissage des champs clés).
+
+| Source | Méthode | Couverture | Qualité des données |
+| --- | --- | --- | --- |
+| **Bien'ici** | API JSON publique | 75/92/93/94 | excellente (prix, m², pièces, chambres, étage, ascenseur, meublé, CP) |
+| **LeBonCoin** | JSON embarqué (`__NEXT_DATA__`) | 75/92/93/94 | excellente — mais protégé par DataDome, peut bloquer par moments |
+| **PAP** | cartes HTML | 75/92/93/94 | bonne (prix, m², pièces, chambres, CP ; étage/meublé via description) |
+| **SeLoger** | JSON embarqué (`__UFRN_FETCHER__`) | 75/92/93/94 | très bonne ; **Logic-Immo** (même inventaire) sert de secours si SeLoger bloque |
+| **Figaro Immobilier** | payload Nuxt | 75/92/93/94 | très bonne |
+| **Foncia** | API JSON | 75/92/93/94 | bonne (pas de nb de chambres) |
+| **EntreParticuliers** | cartes HTML | 75/92/93/94 | correcte (pas de chambres) — particuliers |
+| **LocService** | cartes HTML | 75/92/93/94 | correcte — particuliers |
+| **ParuVendu** | cartes HTML | 75/92/93/94 | bonne |
+| **Laforêt** | cartes HTML | 75/92/93/94 | bonne |
+| **Paris Attitude** | cartes HTML | Paris, meublé | prix/m²/chambres ; **pas de code postal** (quartier seulement) |
+| **Lodgis** | cartes HTML | Paris, meublé | bonne ; CP ~70 % |
+| **Spotahome** | cartes HTML | Paris, meublé | **pas de code postal** |
+| **Jinka** (agrégateur) | API de l'app | selon ton alerte | **non testé** — nécessite ton token (voir plus bas) |
+
+Écartés : Orpi, Guy Hoquet (annonces chargées en JavaScript), La Carte des Colocs (bloqué), Superimmo (rate-limit 429), HousingAnywhere (données difficiles à extraire), Studapart/ImmoJeune (étudiants).
+
+⚠️ **Ces scrapers casseront un jour** : quand un site change sa page, sa source passe en `error` ou `empty` dans le rapport — les autres continuent. Lance `python -m hunt.run --check` pour diagnostiquer. Reste raisonnable sur la fréquence (2 runs/jour, ~2 s entre requêtes) pour ne pas te faire bloquer.
 
 ---
 
 ## Structure du repo
 
 ```
-paris-property-hunt/
-├── README.md              ← toi, ici
-├── skill.md                ← la skill Claude Code principale (copie-colle dans ton setup)
-├── config.md                ← ta config perso, déjà pré-remplie avec tes critères
-├── tracker/
-│   └── README.md           ← schéma des colonnes du tableur
-└── outreach/                ← les messages générés atterrissent ici (à ignorer dans git)
+paris-room-scraper/
+├── README.md
+├── skill.md               ← la skill Claude Code (lance le script, priorise, mail)
+├── config.example.md      ← profils, dossier, trajets (→ config.md, ignoré par git)
+├── search.example.toml    ← critères chiffrés pour les scrapers (→ search.toml, ignoré par git)
+├── requirements.txt
+├── hunt/
+│   ├── run.py             ← point d'entrée : python -m hunt.run
+│   ├── sources/           ← un module par site
+│   ├── http.py            ← client HTTP "navigateur" (curl_cffi), pauses, retry
+│   ├── cards.py           ← parseur générique de cartes HTML
+│   ├── filters.py, dedup.py, tracker.py, geo.py, config.py, models.py
+├── tracker/README.md      ← schéma du tableur
+└── outreach/              ← messages générés (ignoré par git)
 ```
-
----
-
-## Pré-requis
-
-- **Claude Code** (CLI ou app desktop) — claude.ai/code
-- **Claude in Chrome** (extension MCP) — pour scraper PAP/SeLoger/LeBonCoin/Bien'ici (ils bloquent souvent le scraping API classique, d'où le passage par navigateur réel)
-- **Gmail MCP connector** — pour l'envoi du mail récap
-- Python 3 + openpyxl (`pip install openpyxl`) — pour la mise à jour du tableur
 
 ---
 
 ## Mise en place
 
-### 1. Config
-
-Copie `config.example.md` en `config.md` et remplis-le avec tes propres critères (zones, budget, contraintes de déplacement, date d'emménagement...). `config.md` est ignoré par git — il reste local, jamais commit.
-
 ```bash
-cp config.example.md config.md
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp config.example.md config.md          # profils, trajets, dossier, email
+cp search.example.toml search.toml      # budget, pièces, codes postaux
 ```
 
-### 2. Créer le tableur de suivi
+Vérifie que tout répond :
 
 ```bash
-mkdir -p ~/Paris-Appart-Hunt/outreach
+.venv/bin/python -m hunt.run --check                 # toutes les sources, sans toucher au tracker
+.venv/bin/python -m hunt.run --dry-run               # run complet sans écrire le tracker
+.venv/bin/python -m hunt.run --only bienici,pap      # quelques sources seulement
 ```
 
-Le tableur se crée automatiquement au premier run, au chemin indiqué dans `config.md`. Schéma détaillé dans `tracker/README.md`.
+Le rapport du dernier run est dans `output/last-run.json`.
 
-### 3. Installer la skill dans Claude Code
+### Jinka (optionnel, recommandé)
 
-Copie le contenu de `skill.md` comme nouvelle skill dans Claude Code, ou pointe ta config Claude Code vers ce fichier.
+Jinka agrège gratuitement LeBonCoin, SeLoger, PAP, etc. Le script lit **tes** alertes Jinka :
 
-Ou lance-le manuellement :
+1. Crée un compte sur [jinka.fr](https://www.jinka.fr) et une alerte correspondant à ta recherche.
+2. Dans le navigateur connecté à Jinka : DevTools → Application → Cookies → `jinka.fr` → copie la valeur de `LA_API_TOKEN`.
+3. `export JINKA_TOKEN="<la valeur>"` (dans ton shell ou ton `.env`, jamais dans le repo).
+
+Le token expire de temps en temps : la source passera alors en `error` (HTTP 401) — recopie-le.
+
+### Installer la skill
+
+Copie `skill.md` comme skill Claude Code, ou lance :
 
 ```bash
-claude "Lance la recherche d'appart Paris — cherche sur toutes les plateformes, mets à jour le tracker, envoie le mail"
+claude "Lance la recherche d'appart Paris en suivant skill.md"
 ```
 
-### 4. Planifier
-
-Dans Claude Code, utilise `/schedule` :
+### Planifier
 
 ```
 /schedule 0 8,19 * * * Lance la skill de recherche d'appart Paris
@@ -79,4 +111,11 @@ Dans Claude Code, utilise `/schedule` :
 
 ---
 
-*Adapté du repo london-property-hunt de mikepapadim — Claude Code + Claude in Chrome + Gmail MCP*
+## Pré-requis
+
+- Python 3.11+ (`tomllib`)
+- Claude Code + **Gmail MCP** (mail récap) — plus besoin de Claude in Chrome
+
+---
+
+*Adapté du repo london-property-hunt de mikepapadim.*

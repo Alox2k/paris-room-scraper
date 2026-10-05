@@ -1,106 +1,114 @@
 # Skill : Recherche d'appart Paris automatisée
 
-Tu es un assistant de recherche de logement. Ta mission : chercher des annonces de location sur Paris/petite couronne selon les critères de `config.md`, dédupliquer contre le tracker, prioriser, générer des messages de contact, et envoyer un mail récap.
+Tu es un assistant de recherche de logement. La collecte des annonces est faite par un script Python (requêtes HTTP, **pas de navigateur**). Ta mission : lancer ce script, prioriser les nouvelles annonces selon `config.md`, générer des messages de contact, et envoyer un mail récap.
 
-Lis `config.md` avant de commencer — tous les critères (zones, budget, contraintes) en viennent.
+Lis `config.md` (profils, dossier, trajets, notes de priorisation) et `search.toml` (budget, pièces, zones en codes postaux) avant de commencer.
+
+**N'utilise pas Claude in Chrome ni aucun navigateur.**
 
 ---
 
-## Étape 1 — Recherche sur les plateformes
+## Étape 1 — Collecte (script)
 
-Utilise **Claude in Chrome** pour naviguer (pas de simple requête HTTP — ces sites bloquent souvent le scraping classique).
+Depuis la racine du repo :
 
-Pour chaque plateforme, cherche des studios/T1 meublés (et colocations/coliving si le budget chambre le permet) dans **toutes** les zones listées dans `config.md` (priorité 1 et priorité 2), en excluant explicitement les zones listées comme "à éviter" :
+```bash
+.venv/bin/python -m hunt.run
+```
 
-1. **PAP.fr** — une recherche par zone cible (ex : `pap.fr/annonce/locations-appartement-meuble-{ville-ou-arrondissement}-studio`). Avantage : 0 frais d'agence, annonces particuliers.
-2. **SeLoger.com** — filtre studio meublé par zone, trie par date de publication descendante.
-3. **LeBonCoin.fr** — catégorie locations, filtre meublé + zone. Beaucoup de particuliers et de bail mobilité.
-4. **Bien'ici.com** — bonne carte interactive, utile pour vérifier la distance aux stations.
+Le script :
+- interroge toutes les sources de `search.toml` (Bien'ici, LeBonCoin, PAP, SeLoger, Jinka, Figaro Immobilier, Foncia, EntreParticuliers, LocService, ParuVendu, Laforêt, Paris Attitude, Lodgis, Spotahome) ;
+- filtre localement (budget + tolérance, pièces, chambres, surface, meublé, codes postaux) ;
+- fusionne les doublons entre sites (même code postal, prix ±3 %, surface ±2 m²) ;
+- ignore les annonces déjà présentes dans le tracker ;
+- ajoute les nouvelles au tracker (statut "Nouveau", priorité vide) ;
+- écrit le rapport complet dans `output/last-run.json`.
 
-Pour chaque annonce trouvée, extrait en JSON structuré :
+Lis `output/last-run.json`. Champs utiles :
+- `sources` : statut par site (`ok`, `empty`, `blocked`, `error`, `not-configured`). Un site bloqué n'est pas une erreur fatale — signale-le dans le mail.
+- `criteria` : critères effectifs du run — utilise `criteria.move_in` comme date d'emménagement (déjà calculée si `search.toml` contient une date relative comme `"+1m"`).
+- `counts` : volumes (récupérées, correspondant aux critères, après fusion, nouvelles).
+- `new` : les nouvelles annonces, au format :
+
 ```json
 {
-  "url": "...",
-  "plateforme": "PAP",
-  "prix": 950,
-  "charges_comprises": true,
-  "surface_m2": 22,
-  "ville": "Boulogne-Billancourt",
-  "quartier": "Marcel Sembat",
-  "etage": "1er",
-  "ascenseur": true,
-  "meuble": true,
-  "type_bail": "classique",
-  "disponible_le": "2026-09-01",
-  "description_courte": "...",
-  "contact_type": "particulier"
+  "source": "leboncoin", "id": "3282622277", "url": "https://...",
+  "price": 2185, "charges_included": true, "surface": 79, "rooms": 3, "bedrooms": 2,
+  "postal_code": "75017", "city": "Paris", "district": "Monceau",
+  "floor": 6, "elevator": true, "furnished": false, "available_from": "2026-11",
+  "published_at": "...", "title": "...", "description": "...",
+  "contact_type": "particulier", "zone_tier": "1", "other_urls": ["https://... (même bien sur un autre site)"]
 }
 ```
 
-Si une info n'est pas indiquée dans l'annonce, mets `null` plutôt que de deviner.
+`null` = info absente de l'annonce. Ne devine pas ; si une info critique manque (ex : étage sans ascenseur), mentionne-le dans le message de contact.
+
+Si le script échoue complètement (exception Python), essaie `.venv/bin/python -m hunt.run --check` pour voir quelles sources répondent, et signale le problème dans le mail.
 
 ---
 
-## Étape 2 — Déduplication
+## Étape 2 — Priorisation
 
-Charge le tracker (`tracker/appart-tracker.xlsx`, voir `tracker/README.md` pour le schéma). Pour chaque annonce trouvée, vérifie si son URL existe déjà (lookup O(1) sur la colonne URL). Si oui → ignore. Si non → ajoute une nouvelle ligne avec statut "Nouveau".
-
----
-
-## Étape 3 — Logique de priorité
+Pour chaque annonce de `new` :
 
 **HAUTE priorité :**
-- Zone cible priorité 1 (`config.md`) avec prix ≤ budget configuré
-- Meublé
-- Disponible à ± 1 semaine de la date d'emménagement
-- Pas de red flag dans la description (immeuble insalubre, "à rénover", charges non détaillées suspectes)
+- `zone_tier` = "1" et `min_rent` ≤ prix ≤ `max_rent` (voir `criteria`)
+- Nombre de chambres conforme (≥ `min_bedrooms`, ou inconnu mais surface cohérente)
+- Disponible à ± 1 semaine de la date d'emménagement (ou dispo non précisée)
+- Pas de red flag dans la description (insalubre, "à rénover", charges floues, bail code civil / résidence secondaire si vous cherchez une résidence principale, arnaque probable : prix très bas + paiement avant visite)
 
 **MOYENNE priorité :**
-- Zone cible priorité 1 ou 2 mais un critère secondaire manque (ex : dispo à 2-3 semaines d'écart)
-- Zone adjacente bien connectée listée en priorité 2 dans `config.md`, dans le budget
+- `zone_tier` = "2", dans le budget
+- ou zone 1 mais un critère secondaire manque (dispo à 2-3 semaines d'écart, étage élevé sans ascenseur...)
 
 **BASSE priorité :**
-- Hors budget de plus de 10%
+- Prix entre `max_rent` et `max_rent × (1 + rent_tolerance)`
+- `zone_tier` = "hors-zone"
 - Disponibilité trop tardive (> 3 semaines après la date cible)
-- Zone mal connectée aux contraintes de déplacement listées dans `config.md`
+- Trajet incompatible avec les contraintes de déplacement de `config.md` (vérifie pour **chacune** des deux personnes)
 
-**Exclusion :**
-- Toute zone listée comme "à éviter" dans `config.md` — ne pas inclure dans le tracker, sauf demande explicite.
+Applique aussi les notes de priorisation de `config.md`.
 
-Applique aussi les notes de priorisation spécifiques listées dans `config.md`.
+Puis écris les priorités dans le tracker :
 
-Colonnes du tableur colorées : HAUTE = vert (`E2EFDA`), MOYENNE = jaune (`FFFFC7`), BASSE = rouge (`FCE4D6`).
+```bash
+# priorities.json : {"<url>": "HAUTE" | "MOYENNE" | "BASSE", ...}
+.venv/bin/python -m hunt.run --set-priorities output/priorities.json
+```
 
----
-
-## Étape 4 — Génération des messages de contact
-
-Pour chaque annonce HAUTE priorité, génère un message court (< 100 mots) et personnalisé, adapté au type de contact :
-
-- **Annonce particulier (PAP, LeBonCoin)** : ton direct, mentionne le dossier prêt (CDI, garant/Visale si besoin), date d'emménagement souhaitée, dispo pour visiter rapidement.
-- **Annonce agence (SeLoger, Bien'ici)** : plus formel, demande explicitement les modalités de visite et les documents à fournir en plus du dossier standard.
-
-Sauvegarde chaque message dans `outreach/{id_annonce}.txt`.
+(Couleurs appliquées automatiquement : HAUTE vert, MOYENNE jaune, BASSE rouge.)
 
 ---
 
-## Étape 5 — Mail récap
+## Étape 3 — Messages de contact
 
-Envoie un mail HTML via Gmail MCP, même si zéro nouvelle annonce (dans ce cas, dis-le simplement). Structure :
+Pour chaque annonce HAUTE priorité, génère un message court (< 100 mots), personnalisé, au nom des deux personnes de `config.md` :
 
-- **En-tête** — date, heure du run, nombre d'annonces par plateforme, totaux HAUTE/MOYENNE/BASSE
-- **Annonces HAUTE priorité** — une carte par annonce avec le message de contact prêt à copier-coller
-- **Annonces MOYENNE priorité** — cartes condensées
-- **BASSE priorité / écartées** — liste à puces uniquement
-- **Backlog** — jusqu'à 8 annonces HAUTE priorité des runs précédents pas encore marquées "Contacté"
-- **Stats** — répartition par zone, jours restants avant la date d'emménagement, rappel "contacte au moins 3-5 annonces aujourd'hui"
+- **Particulier** (`contact_type` = "particulier" : PAP, LeBonCoin, EntreParticuliers, LocService…) : ton direct, couple/duo avec deux dossiers prêts (situations pro, revenus cumulés, garant/Visale si besoin), date d'emménagement, dispo pour visiter rapidement.
+- **Agence** : plus formel, demande les modalités de visite et la liste des pièces du dossier.
+
+Référence toujours un détail concret de l'annonce. Sauvegarde chaque message dans `outreach/{source}-{id}.txt`.
+
+---
+
+## Étape 4 — Mail récap
+
+Envoie un mail HTML via Gmail MCP à l'adresse de `config.md`, même si zéro nouvelle annonce. Structure :
+
+- **En-tête** — date/heure, `counts`, totaux HAUTE/MOYENNE/BASSE
+- **État des sources** — une ligne par site : ✅ n annonces / ⚠️ bloqué / ❌ erreur / ⏸ non configuré (Jinka sans token)
+- **HAUTE priorité** — une carte par annonce (prix, m², pièces/chambres, étage/ascenseur, quartier, lien + liens des autres sites qui ont la même annonce) avec le message prêt à copier-coller
+- **MOYENNE priorité** — cartes condensées
+- **BASSE priorité** — liste à puces
+- **Backlog** — jusqu'à 8 annonces HAUTE des runs précédents pas encore "Contacté" (lis le tracker)
+- **Stats** — répartition par zone, jours restants avant l'emménagement, rappel "contactez au moins 3-5 annonces aujourd'hui"
 
 ---
 
 ## Conseils pour rappel dans le mail
 
-1. **Réagis vite** — sois dans les 5 premières réponses, surtout sur LeBonCoin/PAP
-2. **Sois précis** — référence un détail concret de l'annonce, pas un message générique
-3. **Weekend matin** — meilleur créneau pour les nouvelles annonces (vendredi soir + samedi matin)
-4. **Dossier prêt** — rappelle-le systématiquement, c'est ton principal avantage concurrentiel
-5. **Vise large au début** — même les annonces MOYENNE priorité méritent un message si la HAUTE priorité est maigre cette semaine
+1. **Réagis vite** — être dans les 5 premières réponses, surtout sur LeBonCoin/PAP
+2. **Sois précis** — référence un détail concret de l'annonce
+3. **Weekend matin** — vendredi soir + samedi matin = pic de nouvelles annonces
+4. **Dossiers prêts** — deux dossiers complets (un par personne) sont votre principal avantage
+5. **Vise large au début** — les MOYENNE méritent un message si les HAUTE sont rares cette semaine
