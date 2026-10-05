@@ -18,7 +18,8 @@ def zone_tier(postal: str | None, cfg: Config) -> str | None:
         return "2"
     if not cfg.priority1 and not cfg.priority2:
         return "1"
-    if postal is None or cfg.keep_out_of_zone:
+    # Unknown location (e.g. Paris Attitude, Spotahome) counts as out of zone.
+    if cfg.keep_out_of_zone:
         return "hors-zone"
     return None
 
