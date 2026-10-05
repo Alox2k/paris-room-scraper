@@ -3,7 +3,7 @@
 import importlib
 
 ALL = [
-    "bienici", "leboncoin", "pap", "seloger", "logicimmo", "jinka",
+    "bienici", "leboncoin", "pap", "seloger", "jinka",
     "figaro", "entreparticuliers", "locservice", "foncia", "paruvendu",
     "laforet", "parisattitude", "lodgis", "spotahome",
 ]
