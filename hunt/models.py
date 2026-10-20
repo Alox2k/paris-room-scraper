@@ -28,8 +28,12 @@ class Listing:
     description: str | None = None
     contact_type: str | None = None  # "particulier" | "agence"
     lat: float | None = None
-    lng: float | None = None
+    lng: float | None = None  # lat/lng only when precise (street/building level), never a district centroid
     # Filled by the pipeline, not by sources
+    metro_station: str | None = None
+    metro_lines: list[str] | None = None
+    metro_m: int | None = None  # distance to nearest metro station
+    line14_m: int | None = None  # distance to nearest line 14 station
     zone_tier: str | None = None  # "1" | "2" | "hors-zone"
     other_urls: list[str] = field(default_factory=list)
 

@@ -14,7 +14,7 @@ NAME = "pap"
 BASE = "https://www.pap.fr"
 
 _CARD = re.compile(r'<a class="item-title" href="(/annonces/[^"]+-r(\d+))"(.*?)</a>\s*(?:<p class="item-description"[^>]*>(.*?)</p>)?', re.S)
-_PRICE = re.compile(r'item-price[^"]*">\s*([\d.\s]+)')
+_PRICE = re.compile(r'class="item-price">\s*(\d[\d.\s]*)')
 _PLACE = re.compile(r'<span class="h1">\s*(.*?)\s*</span>', re.S)
 _TAGS = re.compile(r"<li>(.*?)</li>", re.S)
 
@@ -32,11 +32,13 @@ def fetch(cfg: Config, http: Http) -> list[Listing]:
     for dept in cfg.departments:
         if dept not in DEPARTMENTS or not (gid := _geo_id(http, dept)):
             continue
-        base = f"{BASE}/annonce/locations-appartement-{furn}{slug(DEPARTMENTS[dept])}-{dept}-g{gid}-{cfg.min_rooms}-pieces-jusqu-a-{cfg.price_ceiling}-euros"
+        rooms = f"-{cfg.min_rooms}-pieces" if cfg.min_rooms > 1 else ""  # "1-pieces" isn't a valid PAP slug
+        base = f"{BASE}/annonce/locations-appartement-{furn}{slug(DEPARTMENTS[dept])}-{dept}-g{gid}{rooms}-jusqu-a-{cfg.price_ceiling}-euros"
         for page in range(1, cfg.max_pages + 1):
             page_html = http.get_text(base if page == 1 else f"{base}-{page}")
             cards = _CARD.findall(page_html)
-            out += [_parse(c, dept) for c in cards]
+            # Rooms in a shared flat show up in apartment results; we only want whole flats.
+            out += [_parse(c, dept) for c in cards if not c[0].startswith("/annonces/colocation-")]
             if len(cards) < 10:
                 break
     return out

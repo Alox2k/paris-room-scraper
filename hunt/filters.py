@@ -35,6 +35,8 @@ def keep(l: Listing, cfg: Config) -> bool:
         return False
     if cfg.min_surface and l.surface is not None and l.surface < cfg.min_surface:
         return False
+    if cfg.max_metro_m and l.metro_m is not None and l.metro_m > cfg.max_metro_m:
+        return False
     if cfg.furnished == "yes" and l.furnished is False:
         return False
     if cfg.furnished == "no" and l.furnished is True:

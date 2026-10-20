@@ -1,6 +1,6 @@
 # Tracker — schéma du tableur
 
-Fichier : `tracker/appart-tracker.xlsx` (chemin réglable dans `search.toml` → `[output] tracker`), une feuille `Annonces`. Créé automatiquement au premier run par `hunt/tracker.py`.
+Fichier : `tracker/appart-tracker.xlsx` (chemin réglable dans `search.toml` → `[output] tracker`), une feuille `Annonces`. Créé automatiquement au premier run par `hunt/tracker.py`. Les colonnes ajoutées depuis (Métro, Ligne 14) sont rajoutées en fin de ligne dans les trackers existants.
 
 | Colonne            | Type        | Rempli par | Description                                                       |
 | ------------------ | ----------- | ---------- | ----------------------------------------------------------------- |
@@ -13,6 +13,8 @@ Fichier : `tracker/appart-tracker.xlsx` (chemin réglable dans `search.toml` →
 | Chambres           | nombre      | script     |                                                                   |
 | Code postal        | texte       | script     |                                                                   |
 | Ville / Quartier   | texte       | script     |                                                                   |
+| Métro              | texte       | script     | Station la plus proche (lignes) — distance ; vide si l'annonce n'a pas de position précise |
+| Ligne 14 (m)       | nombre      | script     | Distance à la station de ligne 14 la plus proche ; vide si position imprécise |
 | Étage              | nombre      | script     | 0 = RDC ; vide si inconnu                                         |
 | Ascenseur          | oui/non     | script     | vide si non précisé                                               |
 | Meublé             | oui/non     | script     | vide si non précisé                                               |

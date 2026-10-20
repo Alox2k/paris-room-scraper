@@ -13,7 +13,7 @@ from .models import Listing
 SHEET = "Annonces"
 COLUMNS = [
     "URL", "Plateforme", "Date d'ajout", "Prix", "Surface (m²)", "Pièces", "Chambres", "Code postal",
-    "Ville / Quartier", "Étage", "Ascenseur", "Meublé", "Type de contact", "Disponible le", "Zone",
+    "Ville / Quartier", "Métro", "Ligne 14 (m)", "Étage", "Ascenseur", "Meublé", "Type de contact", "Disponible le", "Zone",
     "Priorité", "Statut", "Message envoyé", "Autres URLs", "Notes",
 ]
 FILLS = {"HAUTE": "E2EFDA", "MOYENNE": "FFFFC7", "BASSE": "FCE4D6"}
@@ -22,7 +22,13 @@ FILLS = {"HAUTE": "E2EFDA", "MOYENNE": "FFFFC7", "BASSE": "FCE4D6"}
 def _open(path: Path):
     if path.exists():
         wb = load_workbook(path)
-        return wb, wb[SHEET]
+        ws = wb[SHEET]
+        head = [c.value for c in ws[1]]
+        for name in COLUMNS:  # trackers created before a column existed get it appended at the end
+            if name not in head:
+                ws.cell(row=1, column=len(head) + 1, value=name).font = Font(bold=True)
+                head.append(name)
+        return wb, ws
     path.parent.mkdir(parents=True, exist_ok=True)
     wb = Workbook()
     ws = wb.active
@@ -53,12 +59,15 @@ def append(path: Path, listings: list[Listing]) -> None:
     wb, ws = _open(path)
     today = date.today().isoformat()
     yn = {True: "oui", False: "non", None: ""}
+    head = [c.value for c in ws[1]]
     for l in listings:
-        ws.append([
+        metro = f"{l.metro_station} ({', '.join(l.metro_lines or [])}) — {l.metro_m} m" if l.metro_station else None
+        values = dict(zip(COLUMNS, [
             l.url, l.source, today, l.price, l.surface, l.rooms, l.bedrooms, l.postal_code,
-            " / ".join(x for x in (l.city, l.district) if x), l.floor, yn[l.elevator], yn[l.furnished],
+            " / ".join(x for x in (l.city, l.district) if x), metro, l.line14_m, l.floor, yn[l.elevator], yn[l.furnished],
             l.contact_type, l.available_from, l.zone_tier, None, "Nouveau", "non", "\n".join(l.other_urls), None,
-        ])
+        ]))
+        ws.append([values.get(h) for h in head])
     wb.save(path)
 
 

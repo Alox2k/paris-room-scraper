@@ -56,6 +56,6 @@ def _parse(c: dict) -> Listing:
         title=c.get("roomCountLabel"),
         description=c.get("description"),
         contact_type="particulier" if c.get("origin") == "particulier" else "agence",
-        lat=loc.get("latitude"),
-        lng=loc.get("longitude"),
+        lat=loc.get("latitude") if loc.get("address") else None,  # without an address it's a rounded district point
+        lng=loc.get("longitude") if loc.get("address") else None,
     )

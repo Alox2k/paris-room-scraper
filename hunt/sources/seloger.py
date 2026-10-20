@@ -34,7 +34,9 @@ def fetch_host(cfg: Config, http: Http, host: str, source: str) -> list[Listing]
         m = _FETCHER.search(http.get_text(url))
         if not m:
             raise RuntimeError("no __UFRN_FETCHER__ data in page (layout changed or soft block)")
-        p = json.loads(json.loads(m.group(1)))["data"]["classified-serp-init-data"]["pageProps"]
+        data = json.loads(json.loads(m.group(1)))["data"]
+        # Renamed from "classified-serp-init-data" (+ "pageProps") in October 2026.
+        p = data["classified-serp-data"] if "classified-serp-data" in data else data["classified-serp-init-data"]["pageProps"]
         ids = p.get("classifieds", [])
         for cid in ids:
             c = p["classifiedsData"].get(cid) if isinstance(cid, str) else cid

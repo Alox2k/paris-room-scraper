@@ -47,7 +47,9 @@ def fetch(cfg: Config, http: Http) -> list[Listing]:
 
 
 def _parse(a: dict) -> Listing:
-    pos = (a.get("blurInfo") or {}).get("position") or {}
+    blur = a.get("blurInfo") or {}
+    # "cityOrArrondissement" is just the district centroid: useless for metro distance.
+    pos = (blur.get("position") or {}) if blur.get("type") != "cityOrArrondissement" else {}
     return Listing(
         source=NAME,
         id=a["id"],
@@ -69,5 +71,5 @@ def _parse(a: dict) -> Listing:
         description=a.get("description"),
         contact_type="agence" if a.get("adCreatedByPro") else "particulier",
         lat=pos.get("lat"),
-        lng=pos.get("lon"),
+        lng=pos.get("lon", pos.get("lng")),
     )

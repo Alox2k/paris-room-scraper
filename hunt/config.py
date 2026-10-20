@@ -17,6 +17,7 @@ class Config:
     min_rooms: int = 3
     min_bedrooms: int = 2
     min_surface: float = 0
+    max_metro_m: int = 0
     furnished: str = "any"
     move_in: str | None = None
     departments: list[str] = field(default_factory=lambda: ["75", "92", "93", "94"])
@@ -27,6 +28,8 @@ class Config:
     sources: list[str] = field(default_factory=list)
     max_pages: int = 3
     delay_seconds: float = 1.5
+    profile: str = "default"
+    notes: str = "config.md"
     jinka_token_env: str = "JINKA_TOKEN"
     tracker: Path = ROOT / "tracker" / "appart-tracker.xlsx"
     last_run: Path = ROOT / "output" / "last-run.json"
@@ -46,13 +49,15 @@ def load(path: str | Path | None = None) -> Config:
     s, z, src = raw.get("search", {}), raw.get("zones", {}), raw.get("sources", {})
     out = raw.get("output", {})
     c = Config()
-    for k in ("min_rent", "max_rent", "rent_tolerance", "min_rooms", "min_bedrooms", "min_surface", "furnished", "move_in", "departments"):
+    for k in ("min_rent", "max_rent", "rent_tolerance", "min_rooms", "min_bedrooms", "min_surface", "max_metro_m", "furnished", "move_in", "departments"):
         if k in s:
             setattr(c, k, s[k])
     for k in ("priority1", "priority2", "exclude", "keep_out_of_zone"):
         if k in z:
             setattr(c, k, z[k])
     c.move_in = resolve_date(c.move_in)
+    c.profile = raw.get("profile", {}).get("name", c.profile)
+    c.notes = raw.get("profile", {}).get("notes", c.notes)
     c.sources = src.get("enabled", [])
     c.max_pages = src.get("max_pages", c.max_pages)
     c.delay_seconds = src.get("delay_seconds", c.delay_seconds)

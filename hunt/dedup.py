@@ -31,7 +31,8 @@ def merge(listings: list[Listing]) -> list[Listing]:
             kept.append(l)
             continue
         twin.other_urls.append(l.url)
-        for f in ("bedrooms", "floor", "elevator", "furnished", "available_from", "charges_included", "description", "lat", "lng"):
+        for f in ("bedrooms", "floor", "elevator", "furnished", "available_from", "charges_included", "description", "lat", "lng",
+                  "metro_station", "metro_lines", "metro_m", "line14_m"):
             if getattr(twin, f) is None and getattr(l, f) is not None:
                 setattr(twin, f, getattr(l, f))
     return kept

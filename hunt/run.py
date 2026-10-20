@@ -17,11 +17,11 @@ from datetime import datetime
 from pathlib import Path
 
 from . import config as config_mod
-from . import dedup, filters, sources, tracker
+from . import dedup, filters, metro, sources, tracker
 from .http import Blocked, Http
 from .models import Listing, enrich_from_text
 
-CHECK_FIELDS = ["price", "surface", "rooms", "bedrooms", "postal_code", "floor", "furnished", "description"]
+CHECK_FIELDS = ["price", "surface", "rooms", "bedrooms", "postal_code", "floor", "furnished", "lat", "description"]
 
 
 def log(*a):
@@ -96,6 +96,8 @@ def main(argv=None):
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return
 
+    for l in raw:
+        metro.enrich(l)
     kept = [l for l in raw if filters.keep(l, cfg)]
     merged = dedup.merge(kept)
     seen = tracker.known_urls(cfg.tracker)
@@ -105,8 +107,10 @@ def main(argv=None):
 
     out = {
         "run_at": datetime.now().isoformat(timespec="seconds"),
+        "profile": cfg.profile,
+        "notes": cfg.notes,
         "criteria": {"min_rent": cfg.min_rent, "max_rent": cfg.max_rent, "min_rooms": cfg.min_rooms, "min_bedrooms": cfg.min_bedrooms,
-                     "min_surface": cfg.min_surface, "furnished": cfg.furnished, "move_in": cfg.move_in},
+                     "min_surface": cfg.min_surface, "max_metro_m": cfg.max_metro_m, "furnished": cfg.furnished, "move_in": cfg.move_in},
         "sources": report,
         "counts": {"fetched": len(raw), "matching": len(kept), "after_merge": len(merged), "new": len(new)},
         "new": [l.to_dict() for l in new],
@@ -115,7 +119,7 @@ def main(argv=None):
     cfg.last_run.parent.mkdir(parents=True, exist_ok=True)
     cfg.last_run.write_text(json.dumps(out, ensure_ascii=False, indent=2))
     log(f"\n{out['counts']} → {cfg.last_run}")
-    print(json.dumps({k: out[k] for k in ("run_at", "counts", "sources")} | {"report": str(cfg.last_run)}, ensure_ascii=False, indent=2))
+    print(json.dumps({k: out[k] for k in ("run_at", "profile", "counts", "sources")} | {"report": str(cfg.last_run)}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

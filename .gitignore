@@ -1,5 +1,7 @@
-# Personal, non-shareable config (your real search criteria)
+# Personal, non-shareable config (your real search criteria), one pair per profile
 config.md
+config.*.md
+!config.example.md
 
 # Generated outreach messages
 outreach/*
@@ -21,4 +23,6 @@ __pycache__/
 .cache/
 output/
 search.toml
+search.*.toml
+!search.example.toml
 .env

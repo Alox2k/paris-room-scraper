@@ -16,8 +16,14 @@ def fetch(cfg: Config, http: Http):
         return []
     out = []
     for beds in (cfg.min_bedrooms, cfg.min_bedrooms + 1):
-        page = http.get_text(f"{BASE}/rent-apartment-{beds}-bedrooms-paris.aspx")
+        page = http.get_text(f"{BASE}/{_path(beds)}")
         for l in cards.listings(NAME, page, LINK, BASE, "75", contact_type="agence", furnished=True):
             l.bedrooms = l.bedrooms or beds
             out.append(l)
     return out
+
+
+def _path(beds: int) -> str:
+    if beds == 0:
+        return "rent-studio-paris.aspx"
+    return f"rent-apartment-{beds}-bedroom{'s' if beds > 1 else ''}-paris.aspx"

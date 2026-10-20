@@ -67,6 +67,6 @@ def _parse(a: dict) -> Listing | None:
         title=a.get("subject"),
         description=a.get("body"),
         contact_type="particulier" if (a.get("owner") or {}).get("type") == "private" else "agence",
-        lat=loc.get("lat"),
-        lng=loc.get("lng"),
+        lat=loc.get("lat") if loc.get("source") == "address" else None,  # otherwise a district centroid
+        lng=loc.get("lng") if loc.get("source") == "address" else None,
     )

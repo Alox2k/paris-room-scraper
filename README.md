@@ -1,6 +1,6 @@
 # Paris Property Hunt
 
-Adapté de [london-property-hunt](https://github.com/mikepapadim/london-property-hunt-public) pour une recherche d'appartement à Paris/petite couronne — ici pour **deux personnes cherchant un 2 chambres**.
+Adapté de [london-property-hunt](https://github.com/mikepapadim/london-property-hunt-public) pour une recherche d'appartement à Paris/petite couronne — avec plusieurs profils en parallèle (ex : **duo** cherchant un 2 chambres, **solo** cherchant un studio). Voir « Profils » plus bas.
 
 Un script Python récupère les annonces de 14 sites **par simples requêtes HTTP** (pas de navigateur, pas de Claude in Chrome), filtre selon tes critères et fusionne les doublons. Claude ne fait plus que ce qu'il fait bien : prioriser, écrire les messages de contact, envoyer le mail récap.
 
@@ -59,6 +59,7 @@ paris-room-scraper/
 │   ├── sources/           ← un module par site
 │   ├── http.py            ← client HTTP "navigateur" (curl_cffi), pauses, retry
 │   ├── cards.py           ← parseur générique de cartes HTML
+│   ├── metro.py           ← distance au métro / à la ligne 14 (open data IDFM)
 │   ├── filters.py, dedup.py, tracker.py, geo.py, config.py, models.py
 ├── tracker/README.md      ← schéma du tableur
 └── outreach/              ← messages générés (ignoré par git)
@@ -85,11 +86,29 @@ Vérifie que tout répond :
 
 Le rapport du dernier run est dans `output/last-run.json`.
 
+### Profils (plusieurs recherches en parallèle)
+
+Chaque profil = un fichier de critères `search.<profil>.toml` + un fichier de notes `config.<profil>.md` (tous deux ignorés par git), avec son propre tracker et son propre rapport (section `[output]`). La section `[profile]` du `.toml` donne le nom du profil et le fichier de notes que Claude doit lire :
+
+```toml
+[profile]
+name = "solo"
+notes = "config.solo.md"
+```
+
+```bash
+.venv/bin/python -m hunt.run --config search.solo.toml --dry-run
+```
+
+Sans `--config`, c'est `search.toml` (+ `config.md`) qui est utilisé.
+
+`max_metro_m` (dans `[search]`) écarte les annonces trop loin de toute station de métro. La distance n'est calculée que pour les annonces avec une position précise : les sites qui ne donnent que le centre du quartier ne sont jamais écartés pour ça.
+
 ### Jinka (optionnel, recommandé)
 
 Jinka agrège gratuitement LeBonCoin, SeLoger, PAP, etc. Le script lit **tes** alertes Jinka :
 
-1. Crée un compte sur [jinka.fr](https://www.jinka.fr) et une alerte correspondant à ta recherche.
+1. Crée un compte sur [jinka.fr](https://www.jinka.fr) et une alerte correspondant à ta recherche. Le script lit **toutes** les alertes du compte pour chaque profil ; les annonces qui ne collent pas aux critères du profil sont filtrées.
 2. Dans le navigateur connecté à Jinka : DevTools → Application → Cookies → `jinka.fr` → copie la valeur de `LA_API_TOKEN`.
 3. `export JINKA_TOKEN="<la valeur>"` (dans ton shell ou ton `.env`, jamais dans le repo).
 
