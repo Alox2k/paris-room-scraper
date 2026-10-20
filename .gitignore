@@ -1,5 +1,7 @@
-# Personal, non-shareable config (your real search criteria)
+# Personal, non-shareable config (your real search criteria), one pair per profile
 config.md
+config.*.md
+!config.example.md
 
 # Generated outreach messages
 outreach/*
@@ -13,3 +15,14 @@ tracker/*.xlsx
 
 # Python venv
 .venv/
+
+# Python bytecode
+__pycache__/
+
+# Local caches and run output
+.cache/
+output/
+search.toml
+search.*.toml
+!search.example.toml
+.env
