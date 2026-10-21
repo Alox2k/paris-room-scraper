@@ -57,10 +57,13 @@ def to_float(v) -> float | None:
 
 _FLOOR = re.compile(r"\b(?:au\s+)?(\d{1,2})\s*(?:e|er|ème|eme|è)\s+étage", re.I)
 _RDC = re.compile(r"rez[- ]de[- ]chauss[ée]e|\bRDC\b", re.I)
+_SURFACE_TXT = re.compile(r"(\d{1,3}(?:[.,]\d{1,2})?)\s*m\s?(?:²|2)(?!\d)", re.I)
+MIN_RENT_PER_M2 = 8  # below this, the surface (or price) is a typo — e.g. "131 m²" for a 13 m² studette at 800 €
 
 
 def enrich_from_text(l: Listing) -> Listing:
-    """Fill floor / elevator / furnished from title+description, only where the source left them None."""
+    """Fill floor / elevator / furnished from title+description, only where the source left them None.
+    Also fixes a surface that gives an implausible rent per m², when the text states another one."""
     text = " ".join(x for x in (l.title, l.description) if x)
     if not text:
         return l
@@ -74,6 +77,13 @@ def enrich_from_text(l: Listing) -> Listing:
             l.elevator = False
         elif re.search(r"ascenseur", text, re.I):
             l.elevator = True
+    if l.surface and l.price and l.price / l.surface < MIN_RENT_PER_M2:
+        # Implausible surface: take the first one stated in the text that gives a believable rent per m².
+        for m in _SURFACE_TXT.finditer(text):
+            v = to_float(m.group(1))
+            if v and v != l.surface and l.price / v >= MIN_RENT_PER_M2:
+                l.surface = v
+                break
     if l.floor is None:
         if m := _FLOOR.search(text):
             l.floor = int(m.group(1))

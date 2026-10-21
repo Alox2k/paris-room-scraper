@@ -64,6 +64,8 @@ def listings(source: str, page: str, link_re: re.Pattern, base: str = "", dept: 
     for url, card in split(page, link_re):
         text = text_of(card)
         f = facts(text)
+        if f["price"] is None and _PRICE.search(text):
+            continue  # only implausible prices (e.g. a sale at "160 000 €" in the rentals list)
         full = url if url.startswith("http") else base + url
         l = Listing(source=source, id=re.sub(r"\W+", "-", full.rsplit("/", 1)[-1] or full)[-60:], url=full,
                     title=text[:140], description=text[:600], **f, **fixed)
